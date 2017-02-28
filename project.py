@@ -41,6 +41,13 @@ def getCalibration():
 
 if __name__ == "__main__":
     mtx_matrix , dist_matrix = getCalibration()
-    testImage = cv2.imread("camera_cal/calibration1.jpg")
-    dst = cv2.undistort(testImage, mtx_matrix, dist_matrix, None, mtx_matrix)
-    cv2.imwrite("output_images/undistorted_1.jpg", dst)
+    testImage1 = cv2.imread("camera_cal/calibration1.jpg")
+    dst1 = cv2.undistort(testImage1, mtx_matrix, dist_matrix, None, mtx_matrix)
+    cv2.imwrite("output_images/undistorted_1.jpg", dst1)
+
+    testImage2 = cv2.imread("test_images/straight_lines1.jpg")
+    dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
+    # cv2.imshow("temp",dst2)
+    cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
+    print("Hello")
+
