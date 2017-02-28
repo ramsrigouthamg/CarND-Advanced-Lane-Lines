@@ -27,10 +27,8 @@ def getCalibration():
 
 
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-    testImage = cv2.imread(images[0])
-    dst = cv2.undistort(testImage, mtx, dist, None, mtx)
-    cv2.imwrite("output_images/undistorted_1.jpg", dst)
     # cv2.imshow("temp",dst)
+    return mtx,dist
 
 
 
@@ -42,4 +40,7 @@ def getCalibration():
 
 
 if __name__ == "__main__":
-    getCalibration()
+    mtx_matrix , dist_matrix = getCalibration()
+    testImage = cv2.imread("camera_cal/calibration1.jpg")
+    dst = cv2.undistort(testImage, mtx_matrix, dist_matrix, None, mtx_matrix)
+    cv2.imwrite("output_images/undistorted_1.jpg", dst)
