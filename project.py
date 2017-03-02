@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage = cv2.imread("test_images/test5.jpg")
+    testImage = cv2.imread("test_images/test6.jpg")
     # cv2.imshow('test',testImage)
     hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
     H = hls[:, :, 0]
@@ -73,23 +73,45 @@ if __name__ == "__main__":
     S = hls[:, :, 2]
     thresh_S = (100,255)
     binary_S = np.zeros_like(S)
-    binary_S[(S > thresh_S[0]) & (S <= thresh_S[1])] = 1
-    # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
-    cv2.namedWindow('image_S')
-    cv2.createTrackbar('S_lower', 'image_S', 0, 255, nothing)
-    cv2.createTrackbar('S_higher', 'image_S', 0, 255, nothing)
-    temp = np.zeros_like(S)
+    binary_S[(S > thresh_S[0]) & (S <= thresh_S[1])] = 255
+    # cv2.imshow('image_S', binary_S)
 
-    while (1):
+    gray = cv2.cvtColor(testImage,cv2.COLOR_BGR2GRAY)
+    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
+    abs_sobelx = np.absolute(sobelx)
+    scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
 
-        cv2.imshow('image_S', temp)
-        k = cv2.waitKey(1) & 0xFF
-        if k == 27:
-            break
-        temp = np.zeros_like(S)
-        s_low = cv2.getTrackbarPos('S_lower', 'image_S')
-        s_high = cv2.getTrackbarPos('S_higher', 'image_S')
-        temp[(S > s_low) & (S <= s_high)] = 255
+    thresh_min = 30
+    thresh_max = 150
+    sxbinary = np.zeros_like(scaled_sobel)
+    sxbinary[(scaled_sobel >= thresh_min) & (scaled_sobel <= thresh_max)] = 255
+    cv2.imshow('image_Sobel', sxbinary)
+    # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
+    # cv2.namedWindow('image_S')
+    # # cv2.namedWindow('image_H')
+    # cv2.createTrackbar('S_lower', 'image_S', 0, 255, nothing)
+    # cv2.createTrackbar('S_higher', 'image_S', 0, 255, nothing)
+    # # cv2.createTrackbar('H_lower', 'image_H', 0, 255, nothing)
+    # # cv2.createTrackbar('H_higher', 'image_H', 0, 255, nothing)
+    # temp_S = np.zeros_like(S)
+    # # temp_H = np.zeros_like(H)
+    #
+    # while (1):
+    #
+    #     cv2.imshow('image_S', temp_S)
+    #     cv2.imshow('image_original', testImage)
+    #     #cv2.imshow('image_H', temp_H)
+    #     k = cv2.waitKey(1) & 0xFF
+    #     if k == 27:
+    #         break
+    #     temp_S = np.zeros_like(S)
+    #     # temp_H = np.zeros_like(H)
+    #     s_low = cv2.getTrackbarPos('S_lower', 'image_S')
+    #     s_high = cv2.getTrackbarPos('S_higher', 'image_S')
+    #     h_low = cv2.getTrackbarPos('H_lower', 'image_H')
+    #     h_high = cv2.getTrackbarPos('H_higher', 'image_H')
+    #     temp_S[(S > s_low) & (S <= s_high)] = 255
+        # temp_H[(H > h_low) & (H <= h_high)] = 255
 
     cv2.destroyAllWindows()
 
