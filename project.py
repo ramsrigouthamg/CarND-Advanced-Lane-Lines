@@ -71,7 +71,7 @@ if __name__ == "__main__":
     H = hls[:, :, 0]
     L = hls[:, :, 1]
     S = hls[:, :, 2]
-    thresh_S = (100,255)
+    thresh_S = (175,250)
     binary_S = np.zeros_like(S)
     binary_S[(S > thresh_S[0]) & (S <= thresh_S[1])] = 255
     # cv2.imshow('image_S', binary_S)
@@ -85,7 +85,13 @@ if __name__ == "__main__":
     thresh_max = 150
     sxbinary = np.zeros_like(scaled_sobel)
     sxbinary[(scaled_sobel >= thresh_min) & (scaled_sobel <= thresh_max)] = 255
-    cv2.imshow('image_Sobel', sxbinary)
+
+    combined = np.zeros_like(gray)
+    combined[(sxbinary==255) | (binary_S==255)] = 255
+
+    cv2.imshow('image_combined', combined)
+    cv2.imshow('sobel',sxbinary)
+    cv2.imshow('s channel', binary_S)
     # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
     # cv2.namedWindow('image_S')
     # # cv2.namedWindow('image_H')
