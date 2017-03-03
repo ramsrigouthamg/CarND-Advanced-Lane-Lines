@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import glob
+from PIL import Image
 
 
 def getCalibration():
@@ -65,7 +66,7 @@ if __name__ == "__main__":
     # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage = cv2.imread("test_images/test6.jpg")
+    testImage = cv2.imread("test_images/straight_lines1.jpg")
     # cv2.imshow('test',testImage)
     hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
     H = hls[:, :, 0]
@@ -89,9 +90,21 @@ if __name__ == "__main__":
     combined = np.zeros_like(gray)
     combined[(sxbinary==255) | (binary_S==255)] = 255
 
-    cv2.imshow('image_combined', combined)
-    cv2.imshow('sobel',sxbinary)
-    cv2.imshow('s channel', binary_S)
+    # cv2.imshow('image_combined', combined)
+    # cv2.imshow('sobel',sxbinary)
+    left_bottom = (193, 720)
+    left_top = (602, 438)
+    right_bottom = (1128, 720)
+    right_top = (673, 438)
+
+    cv2.line(testImage, left_bottom,left_top , (255,0,0),5)
+    cv2.line(testImage, right_bottom,right_top , (255, 0, 0), 5)
+
+    cv2.imshow('Original', testImage)
+
+
+
+
     # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
     # cv2.namedWindow('image_S')
     # # cv2.namedWindow('image_H')
