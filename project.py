@@ -84,7 +84,7 @@ if __name__ == "__main__":
     H = hls[:, :, 0]
     L = hls[:, :, 1]
     S = hls[:, :, 2]
-    thresh_S = (175,250)
+    thresh_S = (170,250)
     binary_S = np.zeros_like(S)
     binary_S[(S > thresh_S[0]) & (S <= thresh_S[1])] = 255
     # cv2.imshow('image_S', binary_S)
@@ -113,6 +113,8 @@ if __name__ == "__main__":
     # cv2.line(testImage, right_bottom,right_top , (255, 0, 0), 5)
 
     cv2.imshow('Original', testImage)
+    cv2.imshow('S channel', binary_S)
+    cv2.imshow('Sobel', sxbinary)
     cv2.imshow('Combined', combined)
 
     output = warp(combined)
