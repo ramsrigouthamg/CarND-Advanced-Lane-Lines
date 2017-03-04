@@ -68,7 +68,7 @@ def warp(img):
 
 
 if __name__ == "__main__":
-    # mtx_matrix , dist_matrix = getCalibration()
+    mtx_matrix , dist_matrix = getCalibration()
     # testImage1 = cv2.imread("camera_cal/calibration1.jpg")
     # dst1 = cv2.undistort(testImage1, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/undistorted_1.jpg", dst1)
@@ -77,7 +77,8 @@ if __name__ == "__main__":
     # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage = cv2.imread("test_images/straight_lines1.jpg")
+    testImage_in = cv2.imread("test_images/straight_lines2.jpg")
+    testImage = cv2.undistort(testImage_in, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imshow('test',testImage)
     hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
     H = hls[:, :, 0]
@@ -113,7 +114,7 @@ if __name__ == "__main__":
 
     cv2.imshow('Original', testImage)
 
-    output = warp(testImage)
+    output = warp(combined)
     cv2.imshow('output',output)
 
 
