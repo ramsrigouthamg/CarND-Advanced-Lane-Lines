@@ -54,6 +54,17 @@ def plot_images(original,img1,img2,img3,orig_label,label1,label2,label3):
 def nothing(x):
     pass
 
+def warp(img):
+    img_size = (200,200)
+    src = np.float32([[193,720],[586, 454],[701, 454],[1128,720]])
+    dst = np.float32([[40, 200], [40, 0], [160, 0], [160, 200]])
+
+    M = cv2.getPerspectiveTransform(src,dst)
+    warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
+    # cv2.line(warped, (40, 200), (40, 0), (255, 0, 0), 5)
+    # cv2.line(warped, (260, 0), (260, 200), (255, 0, 0), 5)
+    return warped
+
 
 
 if __name__ == "__main__":
@@ -93,14 +104,17 @@ if __name__ == "__main__":
     # cv2.imshow('image_combined', combined)
     # cv2.imshow('sobel',sxbinary)
     left_bottom = (193, 720)
-    left_top = (602, 438)
+    left_top = (586, 454)
     right_bottom = (1128, 720)
-    right_top = (673, 438)
+    right_top = (701, 454)
 
-    cv2.line(testImage, left_bottom,left_top , (255,0,0),5)
-    cv2.line(testImage, right_bottom,right_top , (255, 0, 0), 5)
+    # cv2.line(testImage, left_bottom,left_top , (255,0,0),5)
+    # cv2.line(testImage, right_bottom,right_top , (255, 0, 0), 5)
 
     cv2.imshow('Original', testImage)
+
+    output = warp(testImage)
+    cv2.imshow('output',output)
 
 
 
