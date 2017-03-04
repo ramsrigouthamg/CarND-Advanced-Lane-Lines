@@ -77,7 +77,7 @@ if __name__ == "__main__":
     # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage_in = cv2.imread("test_images/straight_lines2.jpg")
+    testImage_in = cv2.imread("test_images/test1.jpg")
     testImage = cv2.undistort(testImage_in, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imshow('test',testImage)
     hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
@@ -113,6 +113,7 @@ if __name__ == "__main__":
     # cv2.line(testImage, right_bottom,right_top , (255, 0, 0), 5)
 
     cv2.imshow('Original', testImage)
+    cv2.imshow('Combined', combined)
 
     output = warp(combined)
     cv2.imshow('output',output)
