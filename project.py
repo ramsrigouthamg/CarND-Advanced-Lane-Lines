@@ -120,9 +120,9 @@ if __name__ == "__main__":
     output = warp(combined)
     cv2.imshow('output',output)
 
-
-
-
+    histogram = np.sum(output[output.shape[0] / 2:, :], axis=0)
+    plt.plot(histogram)
+    plt.show()
     # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
     # cv2.namedWindow('image_S')
     # # cv2.namedWindow('image_H')
