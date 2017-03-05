@@ -60,10 +60,11 @@ def warp(img):
     dst = np.float32([[40, 200], [40, 0], [160, 0], [160, 200]])
 
     M = cv2.getPerspectiveTransform(src,dst)
+    Minv = cv2.getPerspectiveTransform(dst, src)
     warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
     # cv2.line(warped, (40, 200), (40, 0), (255, 0, 0), 5)
     # cv2.line(warped, (260, 0), (260, 200), (255, 0, 0), 5)
-    return warped
+    return warped,Minv
 
 
 
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage_in = cv2.imread("test_images/test2.jpg")
+    testImage_in = cv2.imread("test_images/test6.jpg")
     testImage = cv2.undistort(testImage_in, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imshow('test',testImage)
     hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
@@ -117,8 +118,8 @@ if __name__ == "__main__":
     # cv2.imshow('Sobel', sxbinary)
     # cv2.imshow('Combined', combined)
 
-    binary_warped = warp(combined)
-    plt.subplot(2,1,1)
+    binary_warped,minV = warp(combined)
+    plt.subplot(3,1,1)
     plt.imshow(binary_warped)
 
     histogram = np.sum(binary_warped[binary_warped.shape[0] / 2:, :], axis=0)
@@ -196,12 +197,33 @@ if __name__ == "__main__":
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-    plt.subplot(2, 1, 2)
+    plt.subplot(3, 1, 2)
     plt.imshow(out_img)
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
 
     # plt.plot(histogram)
+
+
+    # Create an image to draw the lines on
+    warp_zero = np.zeros_like(binary_warped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+
+    # Recast the x and y points into usable format for cv2.fillPoly()
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
+
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
+
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    newwarp = cv2.warpPerspective(color_warp, minV, (testImage.shape[1], testImage.shape[0]))
+    # Combine the result with the original image
+    result = cv2.addWeighted(testImage, 1, newwarp, 0.3, 0)
+    plt.subplot(3, 1, 3)
+    plt.imshow(result)
+
     plt.show()
     # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
     # cv2.namedWindow('image_S')
