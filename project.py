@@ -122,7 +122,7 @@ if __name__ == "__main__":
     plt.subplot(3,1,1)
     plt.imshow(binary_warped)
 
-    histogram = np.sum(binary_warped[binary_warped.shape[0] / 2:, :], axis=0)
+    histogram = np.sum(binary_warped[binary_warped.shape[0] // 2:, :], axis=0)
     out_img = np.dstack((binary_warped,binary_warped,binary_warped))*255
 
     # Find the peak of the left and right halves of the histogram
