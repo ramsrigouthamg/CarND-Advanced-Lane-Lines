@@ -118,7 +118,8 @@ if __name__ == "__main__":
     # cv2.imshow('Combined', combined)
 
     binary_warped = warp(combined)
-    cv2.imshow('output',binary_warped)
+    plt.subplot(2,1,1)
+    plt.imshow(binary_warped)
 
     histogram = np.sum(binary_warped[binary_warped.shape[0] / 2:, :], axis=0)
     out_img = np.dstack((binary_warped,binary_warped,binary_warped))*255
@@ -195,6 +196,7 @@ if __name__ == "__main__":
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+    plt.subplot(2, 1, 2)
     plt.imshow(out_img)
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
