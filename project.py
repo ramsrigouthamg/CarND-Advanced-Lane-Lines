@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage_in = cv2.imread("test_images/test6.jpg")
+    testImage_in = cv2.imread("test_images/test3.jpg")
     testImage = cv2.undistort(testImage_in, mtx_matrix, dist_matrix, None, mtx_matrix)
     # cv2.imshow('test',testImage)
     hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
@@ -225,6 +225,7 @@ if __name__ == "__main__":
     plt.imshow(result)
 
     plt.show()
+    cv2.imwrite('output_images/test3.jpg',result)
     # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
     # cv2.namedWindow('image_S')
     # # cv2.namedWindow('image_H')
