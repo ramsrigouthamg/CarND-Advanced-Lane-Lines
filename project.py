@@ -23,12 +23,7 @@ def getCalibration():
             counter = counter + 1
             imgpoints.append(corners)
             objpoints.append(objp)
-            # img = cv2.drawChessboardCorners(img,(ncols,nrows),corners,ret)
-            # cv2.imshow("temp",img)
-
-
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-    # cv2.imshow("temp",dst)
     return mtx,dist
 
 
@@ -54,43 +49,37 @@ def plot_images(original,img1,img2,img3,orig_label,label1,label2,label3):
 def nothing(x):
     pass
 
-def warp(img):
-    img_size = (200,200)
-    src = np.float32([[193,720],[586, 454],[701, 454],[1128,720]])
+def getPerspectiveTransformParameters():
+    src = np.float32([[193, 720], [586, 454], [701, 454], [1128, 720]])
     dst = np.float32([[40, 200], [40, 0], [160, 0], [160, 200]])
-
-    M = cv2.getPerspectiveTransform(src,dst)
+    M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
+    return M,Minv
+
+
+def warp(img,M):
+    img_size = (200,200)
     warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
-    # cv2.line(warped, (40, 200), (40, 0), (255, 0, 0), 5)
-    # cv2.line(warped, (260, 0), (260, 200), (255, 0, 0), 5)
-    return warped,Minv
+    return warped
 
 
+def undistort_image(img,mtx_matrix,dist_matrix):
+    undistort = cv2.undistort(img, mtx_matrix, dist_matrix, None, mtx_matrix)
+    return undistort
 
-if __name__ == "__main__":
-    mtx_matrix , dist_matrix = getCalibration()
-    # testImage1 = cv2.imread("camera_cal/calibration1.jpg")
-    # dst1 = cv2.undistort(testImage1, mtx_matrix, dist_matrix, None, mtx_matrix)
-    # cv2.imwrite("output_images/undistorted_1.jpg", dst1)
-    #
-    # testImage2 = cv2.imread("test_images/straight_lines1.jpg")
-    # dst2 = cv2.undistort(testImage2, mtx_matrix, dist_matrix, None, mtx_matrix)
-    # cv2.imwrite("output_images/straight_lines1_output.jpg", dst2)
 
-    testImage_in = cv2.imread("test_images/test2.jpg")
-    testImage = cv2.undistort(testImage_in, mtx_matrix, dist_matrix, None, mtx_matrix)
-    # cv2.imshow('test',testImage)
-    hls = cv2.cvtColor(testImage, cv2.COLOR_BGR2HLS)
+def processImage(img):
+    # undistort = cv2.undistort(img, mtx_matrix, dist_matrix, None, mtx_matrix)
+
+    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
     H = hls[:, :, 0]
     L = hls[:, :, 1]
     S = hls[:, :, 2]
-    thresh_S = (170,250)
+    thresh_S = (170, 250)
     binary_S = np.zeros_like(S)
     binary_S[(S > thresh_S[0]) & (S <= thresh_S[1])] = 255
-    # cv2.imshow('image_S', binary_S)
 
-    gray = cv2.cvtColor(testImage,cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
     abs_sobelx = np.absolute(sobelx)
     scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
@@ -101,29 +90,13 @@ if __name__ == "__main__":
     sxbinary[(scaled_sobel >= thresh_min) & (scaled_sobel <= thresh_max)] = 255
 
     combined = np.zeros_like(gray)
-    combined[(sxbinary==255) | (binary_S==255)] = 1
+    combined[(sxbinary == 255) | (binary_S == 255)] = 1
 
-    # cv2.imshow('image_combined', combined)
-    # cv2.imshow('sobel',sxbinary)
-    left_bottom = (193, 720)
-    left_top = (586, 454)
-    right_bottom = (1128, 720)
-    right_top = (701, 454)
+    return combined
 
-    # cv2.line(testImage, left_bottom,left_top , (255,0,0),5)
-    # cv2.line(testImage, right_bottom,right_top , (255, 0, 0), 5)
-
-    # cv2.imshow('Original', testImage)
-    # cv2.imshow('S channel', binary_S)
-    # cv2.imshow('Sobel', sxbinary)
-    # cv2.imshow('Combined', combined)
-
-    binary_warped,minV = warp(combined)
-    plt.subplot(3,1,1)
-    plt.imshow(binary_warped)
-
+def calculateCurvature(warped_image,original,MinV):
     histogram = np.sum(binary_warped[binary_warped.shape[0] // 2:, :], axis=0)
-    out_img = np.dstack((binary_warped,binary_warped,binary_warped))*255
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
 
     # Find the peak of the left and right halves of the histogram
     # These will be the starting point for the left and right lines
@@ -164,9 +137,9 @@ if __name__ == "__main__":
         cv2.rectangle(out_img, (win_xright_low, win_y_low), (win_xright_high, win_y_high), (0, 255, 0), 2)
         # Identify the nonzero pixels in x and y within the window
         good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low) & (
-        nonzerox < win_xleft_high)).nonzero()[0]
+            nonzerox < win_xleft_high)).nonzero()[0]
         good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low) & (
-        nonzerox < win_xright_high)).nonzero()[0]
+            nonzerox < win_xright_high)).nonzero()[0]
         # Append these indices to the lists
         left_lane_inds.append(good_left_inds)
         right_lane_inds.append(good_right_inds)
@@ -197,12 +170,12 @@ if __name__ == "__main__":
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-    plt.subplot(3, 1, 2)
-    plt.imshow(out_img)
-    plt.plot(left_fitx, ploty, color='yellow')
-    plt.plot(right_fitx, ploty, color='yellow')
+    # plt.subplot(3, 1, 2)
+    # plt.imshow(out_img)
+    # plt.plot(left_fitx, ploty, color='yellow')
+    # plt.plot(right_fitx, ploty, color='yellow')
 
-    # plt.plot(histogram)
+
 
 
     # Create an image to draw the lines on
@@ -218,16 +191,16 @@ if __name__ == "__main__":
     cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
 
     # Warp the blank back to original image space using inverse perspective matrix (Minv)
-    newwarp = cv2.warpPerspective(color_warp, minV, (testImage.shape[1], testImage.shape[0]))
+    newwarp = cv2.warpPerspective(color_warp, MinV, (original.shape[1], original.shape[0]))
     # Combine the result with the original image
-    result = cv2.addWeighted(testImage, 1, newwarp, 0.3, 0)
-    plt.subplot(3, 1, 3)
-    plt.imshow(result)
+    result = cv2.addWeighted(original, 1, newwarp, 0.3, 0)
 
-    plt.show()
-    cv2.imwrite('output_images/test2.jpg',result)
+    # plt.subplot(3, 1, 3)
+    # plt.imshow(result)
+    #
+    # plt.show()
 
-    #Radius of Curvature
+    # Radius of Curvature
     y_eval = np.max(ploty)
     # left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** 1.5) / np.absolute(2 * left_fit[0])
     # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
@@ -246,36 +219,40 @@ if __name__ == "__main__":
     right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
         2 * right_fit_cr[0])
     # Now our radius of curvature is in meters
-    print(left_curverad, 'm', right_curverad, 'm')
+    # print(left_curverad, 'm', right_curverad, 'm')
+    return result,out_img,left_curverad,right_curverad
 
-    # # plot_images(testImage, H, binary_S, S, 'original', 'H', 'binary_S', 'S')
-    # cv2.namedWindow('image_S')
-    # # cv2.namedWindow('image_H')
-    # cv2.createTrackbar('S_lower', 'image_S', 0, 255, nothing)
-    # cv2.createTrackbar('S_higher', 'image_S', 0, 255, nothing)
-    # # cv2.createTrackbar('H_lower', 'image_H', 0, 255, nothing)
-    # # cv2.createTrackbar('H_higher', 'image_H', 0, 255, nothing)
-    # temp_S = np.zeros_like(S)
-    # # temp_H = np.zeros_like(H)
-    #
-    # while (1):
-    #
-    #     cv2.imshow('image_S', temp_S)
-    #     cv2.imshow('image_original', testImage)
-    #     #cv2.imshow('image_H', temp_H)
-    #     k = cv2.waitKey(1) & 0xFF
-    #     if k == 27:
-    #         break
-    #     temp_S = np.zeros_like(S)
-    #     # temp_H = np.zeros_like(H)
-    #     s_low = cv2.getTrackbarPos('S_lower', 'image_S')
-    #     s_high = cv2.getTrackbarPos('S_higher', 'image_S')
-    #     h_low = cv2.getTrackbarPos('H_lower', 'image_H')
-    #     h_high = cv2.getTrackbarPos('H_higher', 'image_H')
-    #     temp_S[(S > s_low) & (S <= s_high)] = 255
-        # temp_H[(H > h_low) & (H <= h_high)] = 255
 
-    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    mtx_matrix , dist_matrix = getCalibration()
+    M,MinV = getPerspectiveTransformParameters()
+    plotImages = True
+
+    original = cv2.imread("test_images/test2.jpg")
+    original_undistorted =undistort_image(original,mtx_matrix,dist_matrix)
+    combined = processImage(original_undistorted)
+    binary_warped = warp(combined,M)
+    final_output,laneLines,left_curvature,right_curvature = calculateCurvature(binary_warped,original_undistorted,MinV)
+
+    if plotImages:
+        plt.subplot(3, 2, 1)
+        plt.imshow(cv2.cvtColor(original_undistorted, cv2.COLOR_BGR2RGB))
+        plt.subplot(3, 2, 2)
+        plt.imshow(combined)
+        plt.subplot(3, 2, 3)
+        plt.imshow(binary_warped)
+        plt.subplot(3, 2, 4)
+        plt.imshow(cv2.cvtColor(final_output, cv2.COLOR_BGR2RGB))
+        plt.subplot(3, 2, 5)
+        plt.imshow(laneLines)
+        plt.show()
+    print ('left curvature: ',left_curvature,'right curvature: ',right_curvature)
+    # if plotImages:
+    #     cv2.imshow('final', final_output)
+
+
+    # cv2.destroyAllWindows()
 
 
 
