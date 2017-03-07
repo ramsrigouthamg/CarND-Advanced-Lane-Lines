@@ -227,33 +227,46 @@ def calculateCurvature(warped_image,original,MinV):
 if __name__ == "__main__":
     mtx_matrix , dist_matrix = getCalibration()
     M,MinV = getPerspectiveTransformParameters()
-    plotImages = True
+    plotImages = False
 
-    original = cv2.imread("test_images/test2.jpg")
-    original_undistorted =undistort_image(original,mtx_matrix,dist_matrix)
-    combined = processImage(original_undistorted)
-    binary_warped = warp(combined,M)
-    final_output,laneLines,left_curvature,right_curvature = calculateCurvature(binary_warped,original_undistorted,MinV)
+    # original = cv2.imread("test_images/test2.jpg")
+    # original_undistorted =undistort_image(original,mtx_matrix,dist_matrix)
+    # combined = processImage(original_undistorted)
+    # binary_warped = warp(combined,M)
+    # final_output,laneLines,left_curvature,right_curvature = calculateCurvature(binary_warped,original_undistorted,MinV)
 
-    if plotImages:
-        plt.subplot(3, 2, 1)
-        plt.imshow(cv2.cvtColor(original_undistorted, cv2.COLOR_BGR2RGB))
-        plt.subplot(3, 2, 2)
-        plt.imshow(combined)
-        plt.subplot(3, 2, 3)
-        plt.imshow(binary_warped)
-        plt.subplot(3, 2, 4)
-        plt.imshow(cv2.cvtColor(final_output, cv2.COLOR_BGR2RGB))
-        plt.subplot(3, 2, 5)
-        plt.imshow(laneLines)
-        plt.show()
-    print ('left curvature: ',left_curvature,'right curvature: ',right_curvature)
     # if plotImages:
-    #     cv2.imshow('final', final_output)
+    #     plt.subplot(3, 2, 1)
+    #     plt.imshow(cv2.cvtColor(original_undistorted, cv2.COLOR_BGR2RGB))
+    #     plt.subplot(3, 2, 2)
+    #     plt.imshow(combined)
+    #     plt.subplot(3, 2, 3)
+    #     plt.imshow(binary_warped)
+    #     plt.subplot(3, 2, 4)
+    #     plt.imshow(cv2.cvtColor(final_output, cv2.COLOR_BGR2RGB))
+    #     plt.subplot(3, 2, 5)
+    #     plt.imshow(laneLines)
+    #     plt.show()
+    # print ('left curvature: ',left_curvature,'right curvature: ',right_curvature)
 
+    cap = cv2.VideoCapture('project_video.mp4')
 
-    # cv2.destroyAllWindows()
+    while (cap.isOpened()):
+        ret, frame = cap.read()
 
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+        original_undistorted = undistort_image(frame, mtx_matrix, dist_matrix)
+        combined = processImage(original_undistorted)
+        binary_warped = warp(combined, M)
+        final_output, laneLines, left_curvature, right_curvature = calculateCurvature(binary_warped,
+                                                                                      original_undistorted, MinV)
+
+        cv2.imshow('frame', final_output)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 
