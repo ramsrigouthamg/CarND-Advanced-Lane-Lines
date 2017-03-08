@@ -84,13 +84,18 @@ def processImage(img):
     abs_sobelx = np.absolute(sobelx)
     scaled_sobel = np.uint8(255 * abs_sobelx / np.max(abs_sobelx))
 
+    sobelx_SChannel = cv2.Sobel(S, cv2.CV_64F, 1, 0)
+    abs_sobelx_SChannel = np.absolute(sobelx_SChannel)
+    scaled_sobel_SChannel = np.uint8(255 * abs_sobelx_SChannel / np.max(abs_sobelx_SChannel))
+
     thresh_min = 30
     thresh_max = 150
     sxbinary = np.zeros_like(scaled_sobel)
     sxbinary[(scaled_sobel >= thresh_min) & (scaled_sobel <= thresh_max)] = 255
-
+    sxbinary_Schannel = np.zeros_like(scaled_sobel)
+    sxbinary_Schannel[(scaled_sobel_SChannel >= thresh_min) & (scaled_sobel_SChannel <= thresh_max)] = 255
     combined = np.zeros_like(gray)
-    combined[(sxbinary == 255) | (binary_S == 255)] = 1
+    combined[(sxbinary == 255) | (binary_S == 255) | (sxbinary_Schannel == 255)] = 1
 
     return combined
 
