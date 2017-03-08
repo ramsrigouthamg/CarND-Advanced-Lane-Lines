@@ -99,7 +99,35 @@ def processImage(img):
 
     return combined
 
-def calculateCurvature(warped_image,original,MinV):
+# Define a class to receive the characteristics of each line detection
+class Line():
+    def __init__(self):
+        # was the line detected in the last iteration?
+        self.detected = False
+        # x values of the last n fits of the line
+        self.recent_xfitted = []
+        #average x values of the fitted line over the last n iterations
+        self.bestx = None
+        #polynomial coefficients averaged over the last n iterations
+        self.best_fit = None
+        #polynomial coefficients for the most recent fit
+        self.current_fit = [np.array([False])]
+        #radius of curvature of the line in some units
+        self.radius_of_curvature = None
+        #distance in meters of vehicle center from the line
+        self.line_base_pos = None
+        #difference in fit coefficients between last and new fits
+        self.diffs = np.array([0,0,0], dtype='float')
+        #x values for detected line pixels
+        self.allx = None
+        #y values for detected line pixels
+        self.ally = None
+        #Left fit
+        self.left_fit = None
+        #Right fit
+        self.right_fit = None
+
+def calculateCurvature(warped_image,original,MinV,lineObject):
     histogram = np.sum(binary_warped[binary_warped.shape[0] // 2:, :], axis=0)
     out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
 
@@ -225,6 +253,13 @@ def calculateCurvature(warped_image,original,MinV):
         2 * right_fit_cr[0])
     # Now our radius of curvature is in meters
     # print(left_curverad, 'm', right_curverad, 'm')
+    if abs(left_curverad-right_curverad) <150:
+        lineObject.detected = True
+        lineObject.left_fit = left_fit
+        lineObject.right_fit = right_fit
+    else:
+        lineObject.detected = False
+
     return result,out_img,left_curverad,right_curverad
 
 
@@ -234,6 +269,7 @@ if __name__ == "__main__":
     M,MinV = getPerspectiveTransformParameters()
     plotImages = False
 
+    line = Line()
     # original = cv2.imread("test_images/test2.jpg")
     # original_undistorted =undistort_image(original,mtx_matrix,dist_matrix)
     # combined = processImage(original_undistorted)
@@ -258,14 +294,16 @@ if __name__ == "__main__":
 
     while (cap.isOpened()):
         ret, frame = cap.read()
-
+        print("line detected", line.detected)
         # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         original_undistorted = undistort_image(frame, mtx_matrix, dist_matrix)
         combined = processImage(original_undistorted)
         binary_warped = warp(combined, M)
         final_output, laneLines, left_curvature, right_curvature = calculateCurvature(binary_warped,
-                                                                                      original_undistorted, MinV)
+                                                                                      original_undistorted, MinV,line)
+
+        print ('left_curvature ',left_curvature,' right_curvature',right_curvature)
 
         cv2.imshow('frame', final_output)
         if cv2.waitKey(1) & 0xFF == ord('q'):
