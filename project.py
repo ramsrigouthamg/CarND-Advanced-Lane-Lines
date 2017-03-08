@@ -312,6 +312,9 @@ if __name__ == "__main__":
 
         print ('left_curvature ',left_curvature,' right_curvature',right_curvature)
 
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        textString = ' left_curvature: ' + str(round(left_curvature,2)) + ' mts' + ' right_curvature: '+ str(round(right_curvature,2)) +' mts'
+        cv2.putText(final_output, textString, (100, 100), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
         cv2.imshow('frame', final_output)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
