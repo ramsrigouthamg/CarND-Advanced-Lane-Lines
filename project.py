@@ -155,36 +155,43 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     # Create empty lists to receive left and right lane pixel indices
     left_lane_inds = []
     right_lane_inds = []
+    if lineObject.detected:
+        margin = 25
+        left_lane_inds = ((nonzerox > (lineObject.left_fit[0] * (nonzeroy ** 2) + lineObject.left_fit[1] * nonzeroy + lineObject.left_fit[2] - margin)) & (
+        nonzerox < (lineObject.left_fit[0] * (nonzeroy ** 2) + lineObject.left_fit[1] * nonzeroy + lineObject.left_fit[2] + margin)))
+        right_lane_inds = (
+        (nonzerox > (lineObject.right_fit[0] * (nonzeroy ** 2) + lineObject.right_fit[1] * nonzeroy + lineObject.right_fit[2] - margin)) & (
+        nonzerox < (lineObject.right_fit[0] * (nonzeroy ** 2) + lineObject.right_fit[1] * nonzeroy + lineObject.right_fit[2] + margin)))
+    else:
+        # Step through the windows one by one
+        for window in range(nwindows):
+            # Identify window boundaries in x and y (and right and left)
+            win_y_low = binary_warped.shape[0] - (window + 1) * window_height
+            win_y_high = binary_warped.shape[0] - window * window_height
+            win_xleft_low = leftx_current - margin
+            win_xleft_high = leftx_current + margin
+            win_xright_low = rightx_current - margin
+            win_xright_high = rightx_current + margin
+            # Draw the windows on the visualization image
+            cv2.rectangle(out_img, (win_xleft_low, win_y_low), (win_xleft_high, win_y_high), (0, 255, 0), 2)
+            cv2.rectangle(out_img, (win_xright_low, win_y_low), (win_xright_high, win_y_high), (0, 255, 0), 2)
+            # Identify the nonzero pixels in x and y within the window
+            good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low) & (
+                nonzerox < win_xleft_high)).nonzero()[0]
+            good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low) & (
+                nonzerox < win_xright_high)).nonzero()[0]
+            # Append these indices to the lists
+            left_lane_inds.append(good_left_inds)
+            right_lane_inds.append(good_right_inds)
+            # If you found > minpix pixels, recenter next window on their mean position
+            if len(good_left_inds) > minpix:
+                leftx_current = np.int(np.mean(nonzerox[good_left_inds]))
+            if len(good_right_inds) > minpix:
+                rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
 
-    # Step through the windows one by one
-    for window in range(nwindows):
-        # Identify window boundaries in x and y (and right and left)
-        win_y_low = binary_warped.shape[0] - (window + 1) * window_height
-        win_y_high = binary_warped.shape[0] - window * window_height
-        win_xleft_low = leftx_current - margin
-        win_xleft_high = leftx_current + margin
-        win_xright_low = rightx_current - margin
-        win_xright_high = rightx_current + margin
-        # Draw the windows on the visualization image
-        cv2.rectangle(out_img, (win_xleft_low, win_y_low), (win_xleft_high, win_y_high), (0, 255, 0), 2)
-        cv2.rectangle(out_img, (win_xright_low, win_y_low), (win_xright_high, win_y_high), (0, 255, 0), 2)
-        # Identify the nonzero pixels in x and y within the window
-        good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low) & (
-            nonzerox < win_xleft_high)).nonzero()[0]
-        good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low) & (
-            nonzerox < win_xright_high)).nonzero()[0]
-        # Append these indices to the lists
-        left_lane_inds.append(good_left_inds)
-        right_lane_inds.append(good_right_inds)
-        # If you found > minpix pixels, recenter next window on their mean position
-        if len(good_left_inds) > minpix:
-            leftx_current = np.int(np.mean(nonzerox[good_left_inds]))
-        if len(good_right_inds) > minpix:
-            rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
-
-    # Concatenate the arrays of indices
-    left_lane_inds = np.concatenate(left_lane_inds)
-    right_lane_inds = np.concatenate(right_lane_inds)
+        # Concatenate the arrays of indices
+        left_lane_inds = np.concatenate(left_lane_inds)
+        right_lane_inds = np.concatenate(right_lane_inds)
 
     # Extract left and right line pixel positions
     leftx = nonzerox[left_lane_inds]
@@ -253,7 +260,7 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
         2 * right_fit_cr[0])
     # Now our radius of curvature is in meters
     # print(left_curverad, 'm', right_curverad, 'm')
-    if abs(left_curverad-right_curverad) <150:
+    if abs(left_curverad-right_curverad) <200:
         lineObject.detected = True
         lineObject.left_fit = left_fit
         lineObject.right_fit = right_fit
