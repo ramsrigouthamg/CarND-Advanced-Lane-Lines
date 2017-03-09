@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import glob
 from PIL import Image
-
+from collections import deque
 
 def getCalibration():
     images = glob.glob('camera_cal/calibration*.jpg')
@@ -123,8 +123,10 @@ class Line():
         #y values for detected line pixels
         self.ally = None
         #Left fit
+        self.left_fitx_buffer = deque(maxlen=10)
         self.left_fit = None
         #Right fit
+        self.right_fitx_buffer = deque(maxlen=10)
         self.right_fit = None
 
 def calculateCurvature(warped_image,original,MinV,lineObject):
@@ -151,7 +153,7 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     # Set the width of the windows +/- margin
     margin = 25
     # Set minimum number of pixels found to recenter window
-    minpix = 10
+    minpix = 20
     # Create empty lists to receive left and right lane pixel indices
     left_lane_inds = []
     right_lane_inds = []
@@ -207,6 +209,23 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     ploty = np.linspace(0, binary_warped.shape[0] - 1, binary_warped.shape[0])
     left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
     right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
+
+    lineObject.left_fitx_buffer.appendleft(left_fitx)
+    lineObject.right_fitx_buffer.appendleft(right_fitx)
+
+    left_fitx = np.zeros_like(right_fitx)
+    right_fitx = np.zeros_like(left_fitx)
+
+    for left_fitx_elem in lineObject.left_fitx_buffer:
+        left_fitx = np.add(left_fitx ,left_fitx_elem)
+
+    for right_fitx_elem in lineObject.right_fitx_buffer:
+        right_fitx = np.add(right_fitx , right_fitx_elem)
+
+    left_fitx = np.divide(left_fitx,len(lineObject.left_fitx_buffer))
+    right_fitx = np.divide(right_fitx,len(lineObject.right_fitx_buffer))
+
+
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
@@ -264,6 +283,7 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
         lineObject.detected = True
         lineObject.left_fit = left_fit
         lineObject.right_fit = right_fit
+
     else:
         lineObject.detected = False
 
