@@ -250,8 +250,23 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     # Draw the lane onto the warped blank image
     cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
 
+    # plt.imshow(color_warp)
+    # plt.show()
+    # Define conversions in x and y from pixels space to meters
+    ym_per_pix = 30 / 720  # meters per pixel in y dimension
+    xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
     # Warp the blank back to original image space using inverse perspective matrix (Minv)
     newwarp = cv2.warpPerspective(color_warp, MinV, (original.shape[1], original.shape[0]))
+
+    lastRow = newwarp[719,:,1]
+    index = np.where(lastRow!=0)
+    x_min = np.amin(index)
+    x_max = np.amax(index)
+    x_mid = (x_min + x_max)//2
+    x_mid_image = 640
+    dashCamCenterOffset = (x_mid - x_mid_image) * xm_per_pix
+    # plt.imshow(newwarp[:,:,1])
+    # plt.show()
     # Combine the result with the original image
     result = cv2.addWeighted(original, 1, newwarp, 0.3, 0)
 
@@ -266,9 +281,7 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
     # print(left_curverad, right_curverad)
 
-    # Define conversions in x and y from pixels space to meters
-    ym_per_pix = 30 / 720  # meters per pixel in y dimension
-    xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+
 
     # Fit new polynomials to x,y in world space
     left_fit_cr = np.polyfit(lefty * ym_per_pix, leftx * xm_per_pix, 2)
@@ -288,7 +301,7 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     else:
         lineObject.detected = False
 
-    return result,out_img,left_curverad,right_curverad
+    return result,out_img,left_curverad,right_curverad,dashCamCenterOffset
 
 
 
@@ -332,7 +345,7 @@ if __name__ == "__main__":
         # plt.imshow(binary_warped)
         # plt.show()
 
-        final_output, laneLines, left_curvature, right_curvature = calculateCurvature(binary_warped,
+        final_output, laneLines, left_curvature, right_curvature,offset = calculateCurvature(binary_warped,
                                                                                       original_undistorted, MinV,line)
         # plt.imshow(laneLines)
         # plt.show()
@@ -340,8 +353,11 @@ if __name__ == "__main__":
         print ('left_curvature ',left_curvature,' right_curvature',right_curvature)
 
         font = cv2.FONT_HERSHEY_SIMPLEX
-        textString = ' left_curvature: ' + str(round(left_curvature,2)) + ' mts' + ' right_curvature: '+ str(round(right_curvature,2)) +' mts'
+        textString = 'left_curvature: ' + str(round(left_curvature,2)) + ' m' + ' right_curvature: '+ str(round(right_curvature,2)) +' m'
         cv2.putText(final_output, textString, (100, 100), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
+        offsetString = 'Center Offset: '+str(round(offset,3))+ ' m'
+        cv2.putText(final_output, offsetString, (100, 150), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
+
         cv2.imshow('frame', final_output)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
