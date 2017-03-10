@@ -51,14 +51,14 @@ def nothing(x):
 
 def getPerspectiveTransformParameters():
     src = np.float32([[193, 720], [586, 454], [701, 454], [1128, 720]])
-    dst = np.float32([[40, 200], [40, 0], [160, 0], [160, 200]])
+    dst = np.float32([[250, 720], [250, 0], [1030, 0], [1030, 720]])
     M = cv2.getPerspectiveTransform(src, dst)
     Minv = cv2.getPerspectiveTransform(dst, src)
     return M,Minv
 
 
 def warp(img,M):
-    img_size = (200,200)
+    img_size = (1280,720)
     warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
     return warped
 
@@ -151,14 +151,14 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     leftx_current = leftx_base
     rightx_current = rightx_base
     # Set the width of the windows +/- margin
-    margin = 25
+    margin = 75
     # Set minimum number of pixels found to recenter window
-    minpix = 20
+    minpix = 50
     # Create empty lists to receive left and right lane pixel indices
     left_lane_inds = []
     right_lane_inds = []
     if lineObject.detected:
-        margin = 25
+        margin = 50
         left_lane_inds = ((nonzerox > (lineObject.left_fit[0] * (nonzeroy ** 2) + lineObject.left_fit[1] * nonzeroy + lineObject.left_fit[2] - margin)) & (
         nonzerox < (lineObject.left_fit[0] * (nonzeroy ** 2) + lineObject.left_fit[1] * nonzeroy + lineObject.left_fit[2] + margin)))
         right_lane_inds = (
@@ -229,11 +229,12 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-    # plt.subplot(3, 1, 2)
+
+    # plt.subplot(1, 1, 1)
     # plt.imshow(out_img)
     # plt.plot(left_fitx, ploty, color='yellow')
     # plt.plot(right_fitx, ploty, color='yellow')
-
+    # plt.show()
 
 
 
@@ -279,7 +280,7 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
         2 * right_fit_cr[0])
     # Now our radius of curvature is in meters
     # print(left_curverad, 'm', right_curverad, 'm')
-    if abs(left_curverad-right_curverad) <200:
+    if abs(left_curverad-right_curverad) <400:
         lineObject.detected = True
         lineObject.left_fit = left_fit
         lineObject.right_fit = right_fit
@@ -327,8 +328,14 @@ if __name__ == "__main__":
         original_undistorted = undistort_image(frame, mtx_matrix, dist_matrix)
         combined = processImage(original_undistorted)
         binary_warped = warp(combined, M)
+
+        # plt.imshow(binary_warped)
+        # plt.show()
+
         final_output, laneLines, left_curvature, right_curvature = calculateCurvature(binary_warped,
                                                                                       original_undistorted, MinV,line)
+        # plt.imshow(laneLines)
+        # plt.show()
 
         print ('left_curvature ',left_curvature,' right_curvature',right_curvature)
 
