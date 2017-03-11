@@ -26,29 +26,6 @@ def getCalibration():
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     return mtx,dist
 
-
-def plot_images(original,img1,img2,img3,orig_label,label1,label2,label3):
-    b, g, r = cv2.split(original)  # get b,g,r
-    rgb_img = cv2.merge([r, g, b])
-    plt.subplot(2, 2, 1)
-    plt.imshow(rgb_img)
-    plt.xlabel(orig_label)
-
-    plt.subplot(2, 2, 2)
-    plt.imshow(img1,cmap='gray')
-    plt.xlabel(label1)
-    plt.subplot(2, 2, 3)
-    plt.imshow(img2,cmap='gray')
-    plt.xlabel(label2)
-    plt.subplot(2, 2, 4)
-    plt.imshow(img3,cmap='gray')
-    plt.xlabel(label3)
-    plt.show()
-
-
-def nothing(x):
-    pass
-
 def getPerspectiveTransformParameters():
     src = np.float32([[193, 720], [586, 454], [701, 454], [1128, 720]])
     dst = np.float32([[250, 720], [250, 0], [1030, 0], [1030, 720]])
@@ -56,21 +33,16 @@ def getPerspectiveTransformParameters():
     Minv = cv2.getPerspectiveTransform(dst, src)
     return M,Minv
 
-
 def warp(img,M):
     img_size = (1280,720)
     warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
     return warped
 
-
 def undistort_image(img,mtx_matrix,dist_matrix):
     undistort = cv2.undistort(img, mtx_matrix, dist_matrix, None, mtx_matrix)
     return undistort
 
-
 def processImage(img):
-    # undistort = cv2.undistort(img, mtx_matrix, dist_matrix, None, mtx_matrix)
-
     hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
     H = hls[:, :, 0]
     L = hls[:, :, 1]
@@ -104,24 +76,6 @@ class Line():
     def __init__(self):
         # was the line detected in the last iteration?
         self.detected = False
-        # x values of the last n fits of the line
-        self.recent_xfitted = []
-        #average x values of the fitted line over the last n iterations
-        self.bestx = None
-        #polynomial coefficients averaged over the last n iterations
-        self.best_fit = None
-        #polynomial coefficients for the most recent fit
-        self.current_fit = [np.array([False])]
-        #radius of curvature of the line in some units
-        self.radius_of_curvature = None
-        #distance in meters of vehicle center from the line
-        self.line_base_pos = None
-        #difference in fit coefficients between last and new fits
-        self.diffs = np.array([0,0,0], dtype='float')
-        #x values for detected line pixels
-        self.allx = None
-        #y values for detected line pixels
-        self.ally = None
         #Left fit
         self.left_fitx_buffer = deque(maxlen=10)
         self.left_fit = None
@@ -225,18 +179,8 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     left_fitx = np.divide(left_fitx,len(lineObject.left_fitx_buffer))
     right_fitx = np.divide(right_fitx,len(lineObject.right_fitx_buffer))
 
-
-
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-
-    # plt.subplot(1, 1, 1)
-    # plt.imshow(out_img)
-    # plt.plot(left_fitx, ploty, color='yellow')
-    # plt.plot(right_fitx, ploty, color='yellow')
-    # plt.show()
-
-
 
     # Create an image to draw the lines on
     warp_zero = np.zeros_like(binary_warped).astype(np.uint8)
@@ -250,8 +194,6 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     # Draw the lane onto the warped blank image
     cv2.fillPoly(color_warp, np.int_([pts]), (0, 255, 0))
 
-    # plt.imshow(color_warp)
-    # plt.show()
     # Define conversions in x and y from pixels space to meters
     ym_per_pix = 30 / 720  # meters per pixel in y dimension
     xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
@@ -265,23 +207,11 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     x_mid = (x_min + x_max)//2
     x_mid_image = 640
     dashCamCenterOffset = (x_mid - x_mid_image) * xm_per_pix
-    # plt.imshow(newwarp[:,:,1])
-    # plt.show()
     # Combine the result with the original image
     result = cv2.addWeighted(original, 1, newwarp, 0.3, 0)
 
-    # plt.subplot(3, 1, 3)
-    # plt.imshow(result)
-    #
-    # plt.show()
-
     # Radius of Curvature
     y_eval = np.max(ploty)
-    # left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** 1.5) / np.absolute(2 * left_fit[0])
-    # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
-    # print(left_curverad, right_curverad)
-
-
 
     # Fit new polynomials to x,y in world space
     left_fit_cr = np.polyfit(lefty * ym_per_pix, leftx * xm_per_pix, 2)
@@ -292,7 +222,6 @@ def calculateCurvature(warped_image,original,MinV,lineObject):
     right_curverad = ((1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
         2 * right_fit_cr[0])
     # Now our radius of curvature is in meters
-    # print(left_curverad, 'm', right_curverad, 'm')
     if abs(left_curverad-right_curverad) <400:
         lineObject.detected = True
         lineObject.left_fit = left_fit
@@ -311,27 +240,11 @@ if __name__ == "__main__":
     plotImages = False
 
     line = Line()
-    # original = cv2.imread("test_images/test2.jpg")
-    # original_undistorted =undistort_image(original,mtx_matrix,dist_matrix)
-    # combined = processImage(original_undistorted)
-    # binary_warped = warp(combined,M)
-    # final_output,laneLines,left_curvature,right_curvature = calculateCurvature(binary_warped,original_undistorted,MinV)
 
-    # if plotImages:
-    #     plt.subplot(3, 2, 1)
-    #     plt.imshow(cv2.cvtColor(original_undistorted, cv2.COLOR_BGR2RGB))
-    #     plt.subplot(3, 2, 2)
-    #     plt.imshow(combined)
-    #     plt.subplot(3, 2, 3)
-    #     plt.imshow(binary_warped)
-    #     plt.subplot(3, 2, 4)
-    #     plt.imshow(cv2.cvtColor(final_output, cv2.COLOR_BGR2RGB))
-    #     plt.subplot(3, 2, 5)
-    #     plt.imshow(laneLines)
-    #     plt.show()
-    # print ('left curvature: ',left_curvature,'right curvature: ',right_curvature)
-
-    cap = cv2.VideoCapture('project_video.mp4')
+    cap = cv2.VideoCapture('project_video.mp4')#.subclip(20,25)
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+    out = cv2.VideoWriter('output.mp4', fourcc, 20.0, (1280, 720))
 
     while (cap.isOpened()):
         ret, frame = cap.read()
@@ -342,13 +255,8 @@ if __name__ == "__main__":
         combined = processImage(original_undistorted)
         binary_warped = warp(combined, M)
 
-        # plt.imshow(binary_warped)
-        # plt.show()
-
         final_output, laneLines, left_curvature, right_curvature,offset = calculateCurvature(binary_warped,
                                                                                       original_undistorted, MinV,line)
-        # plt.imshow(laneLines)
-        # plt.show()
 
         print ('left_curvature ',left_curvature,' right_curvature',right_curvature)
 
@@ -359,10 +267,12 @@ if __name__ == "__main__":
         cv2.putText(final_output, offsetString, (100, 150), font, 1, (255, 255, 255), 1, cv2.LINE_AA)
 
         cv2.imshow('frame', final_output)
+        out.write(final_output)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
 
 
