@@ -36,7 +36,7 @@ def getCalibration():
 
 def getPerspectiveTransformParameters():
     # Four source point defining the four corners of lane lines when car is driving straight
-    src = np.float32([[193, 720], [586, 454], [701, 454], [1128, 720]])
+    src = np.float32([[193, 720], [586, 454], [695, 454], [1125, 720]])
     # Four destination points that form a rectangle in the perspective transformed image.
     dst = np.float32([[250, 720], [250, 0], [1030, 0], [1030, 720]])
     # Compute the perspective  transform, M
