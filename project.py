@@ -109,7 +109,7 @@ class Line():
         # Store last right fit.
         self.right_fit = None
 
-def calculateCurvature(warped_image,original,MinV,lineObject):
+def calculateCurvature(binary_warped,original,MinV,lineObject):
     # Take histogram along the columns in the lower half of the image.
     histogram = np.sum(binary_warped[binary_warped.shape[0] // 2:, :], axis=0)
     # Create an output image to draw on and  visualize the result
